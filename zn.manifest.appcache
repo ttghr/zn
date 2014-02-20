@@ -1,0 +1,11 @@
+CACHE MANIFEST
+#version: 0.01.01
+
+# Explicitly cached 'master entries'.
+CACHE:
+index.html?ver=0.0.4
+
+# Resources that require the user to be online.
+NETWORK:
+
+FALLBACK:

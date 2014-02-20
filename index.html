@@ -1,0 +1,1003 @@
+<!DOCTYPE HTML>
+<HTML manifest="zn.manifest.appcache_">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<meta name='viewport' content='width=device-width'>
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="mobile-web-app-capable" content="yes">
+
+	<script src="screenfull.js"></script>
+
+	<script>
+		var minute = 0;
+		var sekunde = 0;
+		var spielzeit = 60;
+		var halbzeit = 30;
+		var ticker = null;
+		var ttoTicker
+		var zweiMin = [];
+		var tto = { 
+					zeit: {
+						sekunde: 0,
+						minute:0
+					},
+					start: {
+						sekunde: 0,
+						minute: 0
+					},
+					ende: {
+						sekunde: 0,
+						minute: 0
+					},
+					id: 'tto'
+				};
+
+		function startZeit() {
+			if (ticker == null) {
+				ticker = setInterval('setZeit(1)', 1000);
+				document.getElementById('timerButton').innerHTML = 'Stop&nbsp;';
+				document.getElementById('reset').disabled=true;
+				document.getElementById('setTimerButton').style.display='none';
+			}
+			else {
+				clearTimeout(ticker);
+				ticker = null;
+				document.getElementById('timerButton').innerHTML = 'Start';
+				document.getElementById('reset').disabled=false;
+				document.getElementById('setTimerButton').style.display='block';
+			}
+		}
+
+		function toggleTeamTimeOut(e) {
+			if (ttoTicker == null) {
+				ttoTicker = setInterval(function(){teamTimeOut(e)}, 1000);
+			}
+			else {
+				clearTimeout(ttoTicker);
+				ttoTicker = null;
+			}
+		}
+
+		function setZeit(s) {
+			sekunde = sekunde + (s%60);
+			minute = minute + ((sekunde / 60) | 0); //runden für pos. und neg. Werte
+
+			if( (minute>99) || (minute < 0) )
+				minute = 0;
+			if( (sekunde>59) || (sekunde < 0) )
+				sekunde = 0;
+
+			if( ((minute == halbzeit)  &&(sekunde == 0)) ||
+			    ((minute == spielzeit) &&(sekunde == 0))   ) {
+				startZeit();
+			}
+
+			var preSekunde = '';
+			if (sekunde < 10)
+				preSekunde = '0';
+
+			var preMinute = '';
+			if (minute < 10)
+				preMinute = '0';
+
+			document.getElementById('sZeit').innerHTML = preSekunde + sekunde;
+			document.getElementById('mZeit').innerHTML = preMinute + minute;
+			document.getElementById('sZeitKorrektur').innerHTML = preSekunde + sekunde;
+			document.getElementById('mZeitKorrektur').innerHTML = preMinute + minute;
+
+			for (i in zweiMin) {
+				if (zweiMin[i].start.sekunde>0 || zweiMin[i].start.minute>0){
+					zweiMinuten(document.getElementById(zweiMin[i].id));
+				}
+			}
+		}
+
+		function setSpielzeit(e) {
+			spielzeit = e.options[e.selectedIndex].value / 1;
+			halbzeit = spielzeit / 2;
+		}
+
+		function makeTimeOptions(e, si) {
+				for ( var i = 0; i < 60; i++) {
+					var o = document.createElement("option");
+					o.value = i;
+					o.text = i;
+					e.appendChild(o);
+					}
+					e.selectedIndex = si;
+		}
+
+		function plus(elemId) {
+			var elem = 	document.getElementById(elemId);
+			elem.innerHTML = elem.innerHTML/1+1;
+		}
+		function minus(elemId) {
+			var elem = 	document.getElementById(elemId);
+			elem.innerHTML = elem.innerHTML/1-1;
+		}
+
+		function init(){
+			sekunde = 0;
+			minute = 0;
+
+			zm = document.getElementsByName('2Min');
+			zm_len = zm.length;
+
+			for (var i=0; i<zm.length; i++) {
+				zweiMin[zm[i].id] = { 
+					zeit: {
+						sekunde: 0,
+						minute:0
+					},
+					start: {
+						sekunde: 0,
+						minute: 0
+					},
+					ende: {
+						sekunde: 0,
+						minute: 0
+					},
+					id: zm[i].id
+				};
+			}
+		}
+		function teamTimeOut(e)
+		{
+			lbl = document.getElementById('lbl_'+e.id);
+
+			if (e.checked == true){ // TTO ist gestartet
+				if (lbl.innerHTML == 'TTO') { //erster tick -> auf Null setzen
+					//Zeit anhalten
+					if (ticker !== null) {
+						clearTimeout(ticker);
+						ticker = null;
+						document.getElementById('timerButton').innerHTML = 'Start';
+					}
+					tto.zeit.sekunde = 0;
+					tto.zeit.minute = 0;
+					tto.start.minute = minute;
+					tto.start.sekunde = sekunde;
+					tto.ende.minute = minute + 1;
+					tto.ende.sekunde = tto.start.sekunde;
+					lbl.innerHTML = '0:00';
+				}
+				else { //laufender tick -> plus eine Sekunde
+					tto.zeit.sekunde = tto.zeit.sekunde + 1;
+					if (tto.zeit.sekunde >= 60) {
+						tto.zeit.sekunde = 0;
+						tto.zeit.minute = tto.zeit.minute + 1;
+					}
+					// 1Minuten abgelaufen -> reset
+					if (tto.zeit.minute == 1) {
+						lbl.innerHTML = 'TTO';
+						tto.start.minute = 0;
+						tto.start.sekunde = 0;
+						e.checked = false;
+					}
+					else {//laufende Ausgabe
+						var preSekunde = '';
+						if (tto.zeit.sekunde < 10)
+							preSekunde = '0';
+						lbl.innerHTML = tto.zeit.minute + ':' + preSekunde + tto.zeit.sekunde;
+					}
+				}
+			}
+		}
+		
+
+
+		function zweiMinuten(e){
+
+			lbl = document.getElementById('lbl_'+e.id);
+
+			if (e.checked == true){ // 2Min sind gestartet
+				if (lbl.innerHTML == '2 Min') {//erster tick -> auf Null setzen
+					zweiMin[e.id].zeit.sekunde = 0;
+					zweiMin[e.id].zeit.minute = 0;
+					zweiMin[e.id].start.minute = minute;
+					zweiMin[e.id].start.sekunde = sekunde;
+					zweiMin[e.id].ende.minute = minute + 2;
+					zweiMin[e.id].ende.sekunde = zweiMin[e.id].start.sekunde;
+					lbl.innerHTML = '0:00';
+				}
+				else { //laufender tick -> plus eine Sekunde
+					zweiMin[e.id].zeit.sekunde = zweiMin[e.id].zeit.sekunde + 1;
+					if (zweiMin[e.id].zeit.sekunde >= 60) {
+						zweiMin[e.id].zeit.sekunde = 0;
+						zweiMin[e.id].zeit.minute = zweiMin[e.id].zeit.minute + 1;
+					}
+					// 2Minuten abgelaufen -> reset
+					if (zweiMin[e.id].zeit.minute == 2) {
+						lbl.innerHTML = '2 Min';
+						zweiMin[e.id].start.minute = 0;
+						zweiMin[e.id].start.sekunde = 0;
+						e.checked = false;
+					}
+					else {//laufende Ausgabe
+						var preSekunde = '';
+						if (zweiMin[e.id].zeit.sekunde < 10)
+							preSekunde = '0';
+						lbl.innerHTML = zweiMin[e.id].zeit.minute + ':' + preSekunde + zweiMin[e.id].zeit.sekunde;
+					}
+				}
+			}
+			else {
+				//zweiMin[e.id].start.minute = 0;
+				//zweiMin[e.id].start.sekunde = 0;
+				null;
+			}
+		}
+		
+		function toggleFullscreen() {
+			alert((document.body.offsetWidth));
+			if (screenfull.enabled) {
+				screenfull.toggle();
+			}
+		}
+		function showSetup() {
+			document.getElementById('app').style.display = 'none';
+			document.getElementById('setup').style.display = 'table';
+		}
+		function showHelp() {
+			document.getElementById('app').style.display = 'none';
+			document.getElementById('help').style.display = 'table';
+		}
+		function showTimer() {
+			makeTimeOptions(document.getElementById('timeMin'), minute);
+			makeTimeOptions(document.getElementById('timeSek'), sekunde);
+			document.getElementById('app').style.display = 'none';
+			document.getElementById('timer').style.display = 'table';
+		}
+
+		function showApp() {
+			document.getElementById('app').style.display = 'table';
+			document.getElementById('setup').style.display = 'none';
+			document.getElementById('timer').style.display = 'none';
+			document.getElementById('help').style.display = 'none';
+		}
+
+		function resetApp() {
+			if (!ticker && confirm('reset the current game !') ) {
+				document.getElementById('torHeim').innerHTML = 0;
+				document.getElementById('torGast').innerHTML = 0;
+				//startZeit();
+				init();
+				setZeit(0);
+			}
+				return;
+		}
+	</script>
+
+	<style type="text/css">
+
+body {
+	margin: 0;
+}
+
+	@-ms-viewport { width: 320px, initial-scale=2.0 }
+	@-o-viewport { width: device-width, initial-scale=2.0 } 
+	@viewport { width: device-width, initial-scale=2.0 }
+
+html
+{
+	margin-left: auto;
+	margin-right: auto;
+	height: 100%;
+	min-width: 320px;
+	max-width: 320px;
+	background-color: green;
+
+	/*padding: 10px;*/
+}
+
+.centered-horizontal
+{
+	display: table;
+	margin-left: auto;
+	margin-right: auto;
+	background-color: blue;
+	padding-left: 10px;
+	padding-right: 10px;
+	height: 100%;
+	min-width: 100%%;
+	/*max-width: 280px;*/
+	/*padding: 10px;*/
+}
+
+@media only screen 
+and (max-width : 320px){
+	html {min-width:200px; max-width: 320px; width:320px; background-color: green;}
+}
+
+.center {
+	text-align: center;
+}
+
+.row:before, .row:after {display: table; content: "";}
+.row:after {clear: both;}
+
+.span1, .span2, .span3, .span4, .span5, .span6, .span7, .span8, .span9, .span10, .span11 {
+    margin-right: 3.5%;
+    float: left;
+    min-height: 1px;
+}
+
+
+.row > [class*="span"]:last-child {
+    margin-right: 0;
+}
+
+.span1 {width: 5.125%;}
+.span2 {width: 13.75%;}
+.span3 {width: 22.375%;}
+.span4 {width: 31%;}
+.span5 {width: 39.625%;}
+.span6 {width: 48.25%;}
+.span7 {width: 56.75%;}
+.span8 {width: 65.5%;}
+.span9 {width: 74.125%;}
+.span10 {width: 82.75%;}
+.span11 {width: 91.375%;}
+.span12 {width: 100%; float: left;}
+
+.offset1 {margin-left: 8.625%;}
+.offset2 {margin-left: 17.25%;}
+.offset3 {margin-left: 25.875%;}
+.offset4 {margin-left: 34.5%;}
+.offset5 {margin-left: 43.125%;}
+.offset6 {margin-left: 51.75%;}
+.offset7 {margin-left: 60.25%;}
+.offset8 {margin-left: 69%;}
+.offset9 {margin-left: 77.625%;}
+.offset10 {margin-left: 86%;}
+.offset11 {margin-left: 94.875%;}
+
+
+
+
+input.switch:empty
+{
+  /*margin-left: -999px;*/
+  display: none;
+
+}
+
+input.switch:empty ~ label
+{
+  position: relative;
+  float: left;
+  line-height: 32px;
+  text-indent: 50px;
+  margin: 4px 0;
+  cursor: pointer;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+input.switch:empty ~ label:before, 
+input.switch:empty ~ label:after
+{
+  position: absolute;
+  display: block;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  content: ' ';
+  width: 40px;
+  background-color: #c33;
+  border-radius: 5px;
+  box-shadow: inset 0 4px 0 rgba(0,0,0,0.3);
+  -webkit-transition: all 100ms ease-in;
+  transition: all 100ms ease-in;
+}
+
+input.switch:empty ~ label:after
+{
+  width: 20px;
+  top: 2px;
+  bottom: 1px;
+  margin-left: 1px;
+  background-color: #fff;
+  border-radius: 5px;
+  box-shadow: inset 0 -4px 0 rgba(0,0,0,0.2);
+}
+
+input.switch:checked ~ label:before
+{
+  background-color: #393;
+}
+
+input.switch:checked ~ label:after
+{
+  margin-left: 18px;
+}
+
+
+
+.iconContainer{height:40px; width:40px; display:block; position:relative; float:right; margin: 3px;} 
+
+#help td .iconContainer {
+	float: left;
+}
+#help table td+td {
+	vertical-align: middle;
+	padding-left: 10px;
+}
+
+.helptext {
+	color: #fff;
+}
+.icon-menu, .icon-arrow-back, .icon-start, .icon-stop, .icon-help {
+  border: 2px solid #FFFFFF;
+  border-radius: 36px;
+  display: block;
+  height: 36px;
+  width: 36px;
+}
+.icon-menu:before {
+  background: none repeat scroll 0 0 #FFFFFF;
+  box-shadow: 0 8px 0 #FFFFFF, 0 16px 0 #FFFFFF;
+  content: "";
+  display: block;
+  height: 2px;
+  left: 10px;
+  position: absolute;
+  top: 10px;
+  width: 20px;
+}
+.icon-menu:hover:before{
+	background:#666;
+	box-shadow:0 8px 0 #666, 0 16px 0 #666;
+	-webkit-box-shadow:0 8px 0 #666, 0 16px 0 #666;
+	-moz-box-shadow:0 8px 0 #666, 0 16px 0 #666;
+}
+
+.iconContainer.icon-time:before {
+  background: none repeat scroll 0 0 #0000FF;
+  border-color: #FFFFFF;
+  border-radius: 30px 0 0 30px;
+  border-style: solid none solid solid;
+  border-width: 2px;
+  content: "";
+  height: 36px;
+  left: 0;
+  position: absolute;
+  top: 0;
+  width: 18px;
+}
+.icon-time:before {
+  background: none repeat scroll 0 0 #0000FF;
+  border-color: #FFFFFF;
+  border-radius: 0 30px 0 0;
+  border-style: solid;
+  border-width: 2px;
+  content: "";
+  height: 16px;
+  left: 20px;
+  position: absolute;
+  top: 0;
+  width: 16px;
+  z-index: 1;
+}
+.iconContainer .icon-time:hover:before {
+	border-left-color: #666;
+	border-bottom-color: #666;
+}
+
+.icon-time:after {
+  background: none repeat scroll 0 0 #0000FF;
+  border-color: #FFFFFF;
+  border-radius: 0 0 30px;
+  border-style: none solid solid none;
+  border-width: 2px;
+  content: "";
+  height: 18px;
+  left: 20px;
+  position: absolute;
+  top: 20px;
+  width: 18px;
+}
+
+.icon-arrow-back:before {
+  -moz-border-bottom-colors: none;
+  -moz-border-left-colors: none;
+  -moz-border-right-colors: none;
+  -moz-border-top-colors: none;
+  border-color: rgba(0, 0, 0, 0) #FFFFFF rgba(0, 0, 0, 0) rgba(0, 0, 0, 0);
+  border-image: none;
+  border-style: solid;
+  border-width: 12px 12px 12px 0;
+  content: "";
+  display: block;
+  height: 0;
+  left: 6px;
+  position: absolute;
+  top: 7px;
+  width: 0;
+}
+.icon-arrow-back:after {
+  background: none repeat scroll 0 0 #FFFFFF;
+  content: "";
+  display: block;
+  height: 10px;
+  left: 18px;
+  position: absolute;
+  right: 0;
+  top: 14px;
+  width: 15px;
+}
+
+.icon-arrow-back:hover:before {
+	border-color: rgba(0, 0, 0, 0) #666 rgba(0, 0, 0, 0) rgba(0, 0, 0, 0);
+}
+
+.icon-arrow-back:hover:after {
+	background: none repeat scroll 0 0 #666;
+}
+
+
+.icon-start{height:36px; width:36px; border:2px solid #fff; border-radius:40px;-webkit-border-radius:40px;-moz-border-radius:40px;}
+
+.icon-start:before{content:''; height:0; width:0; display:block; border:10px transparent solid; border-right-width:0; border-left-color:#fff; position:absolute; top:9px; left:18px;}
+
+.icon-stop{height:36px; width:36px; border:2px solid #fff; border-radius:20px;-webkit-border-radius:20px;-moz-border-radius:20px;}
+
+.icon-stop:before{content:''; height:16px; width:16px; display:block; background:#fff; position:absolute; top:12px; left:12px;}
+
+.icon-help:before {
+  content: "?";
+  display: block;
+  color: white;
+  left: 12px;
+  position: absolute;
+  top: 0px;
+  font-weight: bold;
+  font-size: 32px;
+}
+.icon-help:hover:before{
+	color: #666;
+}
+
+.fullScreen:before {
+    border-left: 20px solid #0000FF;
+    content: " ";
+    height: 42px;
+    left: 10px;
+    position: absolute;
+    top: -1px;
+}
+.fullScreen:after {
+    border-left: 40px solid #0000FF;
+    content: " ";
+    height: 20px;
+    left: 0;
+    position: absolute;
+    top: 10px;
+}
+.fullScreen {
+    border: 2px solid #FFFFFF;
+    color: #0000FF;
+    display: block;
+    font-size: 60px;
+    font-weight: bold;
+    height: 36px;
+    width: 36px;
+}
+
+
+		.buttonPlus {
+			background-color:#9dce2c;
+			border-top-left-radius:20px;
+			border-top-right-radius:20px;
+			border-bottom-right-radius:20px;
+			border-bottom-left-radius:20px;
+			text-indent:0;
+			border:1px solid #83c41a;
+			display:inline-block;
+			color:#ffffff;
+			font-family:monospace;
+			font-size:2em;
+			font-weight:bold;
+			font-style:normal;
+			text-decoration:none;
+			text-align:center;
+			text-shadow:1px 1px 0px #689324;
+			padding: 5px; /*ipad safari */
+		}
+		.buttonPlus:hover {
+			background-color:#8cb82b;
+		}
+		.buttonPlus:active {
+			position:relative;
+			top:1px;
+		}
+
+		.buttonMinus {
+			background-color:#f24537;
+			border-top-left-radius:20px;
+			border-top-right-radius:20px;
+			border-bottom-right-radius:20px;
+			border-bottom-left-radius:20px;
+			text-indent:0;
+			border:1px solid #d02718;
+			display:inline-block;
+			color:#ffffff;
+			font-family:monospace;
+			font-size:2em;
+			font-weight:bold;
+			font-style:normal;
+			text-decoration:none;
+			text-align:center;
+			text-shadow:1px 1px 0px #c62d1f;
+			padding: 5px; /*ipad safari */
+		}
+		.buttonMinus:hover {
+			background-color:#c62d1f;
+		}
+		.buttonMinus:active {
+			position:relative;
+			top:1px;
+		}
+		.buttonMinus:disabled {
+			background-color: #0000FF;
+			border-color: #0000FF;
+			color: #AFAFAF;
+		}
+		.buttonOrange {
+			background-color:#ffc477;
+			border-top-left-radius:20px;
+			border-top-right-radius:20px;
+			border-bottom-right-radius:20px;
+			border-bottom-left-radius:20px;
+			text-indent:0;
+			border:1px solid #ffc477;
+			display:inline-block;
+			color:#ffffff;
+			font-family:monospace;
+			font-size:2em;
+			font-weight:bold;
+			font-style:normal;
+			text-decoration:none;
+			text-align:center;
+			text-shadow:1px 1px 0px #c62d1f;
+			padding: 5px; /*ipad safari */
+		}
+		.buttonOrange:hover {
+			background-color:#c62d1f;
+		}
+		.buttonOrange:active {
+			position:relative;
+			top:1px;
+		}
+
+
+		.header {
+			font-size: 2em;
+			color: white;
+			text-align: center;
+		}
+		.result {
+			font-size: 3em;
+			color: white;
+			text-align: center;
+		}
+		.pmLeft {
+			float: left;
+		}
+		.pmRight {
+			float: right;
+		}
+
+		.zeit {
+			font-family: monospace;
+			font-size: 2.2em;
+			font-weight: bold;
+		}
+		label {
+			font-family: monospace; 
+			font-weight: bold;
+			color: white;
+		}
+
+	</style>
+</head>
+<body>
+
+<div class="centered-horizontal" id="app">
+
+	<div class="row">
+		<span class="span4 header">Heim</span>
+		<span class="span4 header zeit">
+			<span id="mZeit">00</span>:<span id="sZeit">00</span>
+		</span>
+		<span class="span4 header">Gast</span>
+	</div>
+
+	<div class="row">
+		<span id="torHeim" class="span4 result">0</span><span class="span4 header">:</span><span id="torGast" class="span4 result">0</span>
+	</div>
+
+	<div class="row">
+		<span class="pmLeft">
+			<button class="buttonPlus" onClick="plus('torHeim')">&nbsp;+&nbsp;</button>
+			&nbsp;
+			<button class="buttonMinus" onClick="minus('torHeim')">-</button>
+		</span>
+		<span class="pmRight">
+			<button class="buttonMinus" onClick="minus('torGast')">-</button>
+			&nbsp;
+			<button class="buttonPlus" onClick="plus('torGast')">&nbsp;+&nbsp;</button>
+		</span>
+	</div>
+
+
+	<div class="unit one-of-two pmRight">
+	</div>
+
+	<hr>
+	<div class="row">
+		<span class="span12 center">
+			<button class=" buttonPlus" id="timerButton" onClick="startZeit()">Start</button>
+			<button id="reset" class=" buttonMinus" onClick="resetApp()">Reset</button>
+		</span>
+	</div>
+	<hr>
+
+	<div class="row">
+		<span class="span6">
+			<input type="checkbox" id="2MinHeim1" class="switch" name="2Min" onClick="zweiMinuten(this)"></input>
+			<label class="col_" id="lbl_2MinHeim1" for="2MinHeim1">2 Min</label>
+		</span>
+		<span class="span6">
+			<input type="checkbox" id="2MinGast1" class="switch" name="2Min" onClick="zweiMinuten(this)"></input>
+			<label class="col_" id="lbl_2MinGast1" for="2MinGast1">2 Min</label>
+		</span>
+	</div>
+	
+	<div class="row">
+		<span class="span6">
+			<input type="checkbox" id="2MinHeim2" class="switch" name="2Min" onClick="zweiMinuten(this)"/>
+			<label class="col_" id="lbl_2MinHeim2" for="2MinHeim2">2 Min</label>
+		</span>
+		<span class="span6">
+			<input type="checkbox" id="2MinGast2" class="switch" name="2Min" onClick="zweiMinuten(this)"/>
+			<label class="col_" id="lbl_2MinGast2" for="2MinGast2">2 Min</label>
+		</span>
+	</div>
+	
+	<div class="row">
+		<span class="span6">
+			<input type="checkbox" id="2MinHeim3" class="switch" name="2Min" onClick="zweiMinuten(this)"/>
+			<label class="col_" id="lbl_2MinHeim3" for="2MinHeim3">2 Min</label>
+		</span>
+		<span class="span6">
+			<input type="checkbox" id="2MinGast3" class="switch" name="2Min" onClick="zweiMinuten(this)"/>
+			<label id="lbl_2MinGast3" for="2MinGast3">2 Min</label>
+		</span>
+	</div>
+	
+<hr>
+	<div class="row">
+		<span>
+			<input type="checkbox" id="tto" class="switch" onClick="toggleTeamTimeOut(this)"/>
+			<label class="col" id="lbl_tto" for="tto">TTO</label>
+		</span>
+
+
+		<span class="iconContainer">
+			<span class="icon-help" onClick="showHelp()"></span>
+		</span>
+		<span class="iconContainer">
+			<span id="fullScreen" class="fullScreen"  onClick="toggleFullscreen()"></span>
+		</span>
+		<span class="iconContainer">
+			<span class="icon-menu" onClick="showSetup()"></span>
+		</span>
+
+		<span id="setTimerButton" class="iconContainer icon-time" onClick="showTimer()">
+			<span class="icon-time"></span>
+		</span>
+
+	</div>
+	<hr>
+
+</div>
+<div class="centered-horizontal" id="setup" style="display:none;">
+	<P class="row">
+		<span class="col header">Spielzeit:</span>
+	</p>
+	<P class="row">
+		<select id="spielzeit" onChange="setSpielzeit(this);">
+			<option value="60">60 Min</option>
+			<option value="50">50 Min</option>
+			<option value="40">40 Min</option>
+		</select>
+		<span class="iconContainer">
+			<span class="icon-arrow-back" onClick="showApp()"></span>
+		</span>
+	</p>
+</div>
+
+<div class="centered-horizontal" id="timer" style="display:none;">
+	<P class="row">
+		<span class="col header">Zeitkorrektur:</span>
+	</p>
+	<p class="row">
+		<span class="offset4 span4 header zeit">
+			<span id="mZeitKorrektur">00</span>:<span id="sZeitKorrektur">00</span>
+		</span>
+	</p>
+	<p class="row">
+	
+		<span class="span12 header zeit">
+		<select id="timeMin" onChange="minute = this.options[this.selectedIndex].value/1; setZeit(0);">
+		</select>
+		:
+		<select id="timeSek" onChange="sekunde = this.options[this.selectedIndex].value/1; setZeit(0);">
+		</select>
+		</span>
+
+	</p>
+	<p class="row">
+		<span class="iconContainer">
+			<span class="icon-arrow-back" onClick="showApp()"></span>
+		</span>
+	</p>
+
+</div>
+
+
+
+<div class="centered-horizontal" id="help" style="display:none;">
+	<p class="row">
+		<span class="col header">Bedinungsanleitung:</span>
+	</p>
+	<hr>
+	<table>
+		<tr>
+			<td>
+				<span class="iconContainer">
+					<span class="icon-help"></span>
+				</span>
+			</td>
+			<td>
+				<span class="helptext">Bedienungsanleitung</span>
+			</td>
+		</tr>
+
+		<tr>
+			<td>
+				<span id="setTimerButton" class="iconContainer icon-time">
+					<span class="icon-time"></span>
+				</span>
+			</td>
+			<td>
+				<span class="helptext">Zeitkorrektur</span>
+			</td>
+		</tr>
+
+		<tr>
+			<td>
+				<span class="iconContainer">
+					<span class="icon-menu"></span>
+				</span>
+			</td>
+			<td>
+				<span class="helptext">Einstellungen</span>
+			</td>
+		</tr>
+
+		<tr>
+			<td>
+				<span class="iconContainer">
+					<span class="icon-arrow-back"></span>
+				</span>
+			</td>
+			<td>
+				<span class="helptext">zurück zur App</span>
+			</td>
+		</tr>
+
+		<tr>
+			<td>
+				<input type="checkbox" id="2MinHelp" class="switch" name="2Min"></input>
+				<label class="col_" for="2MinHelp">2 Min</label>
+			</td>
+			<td>
+				<span class="helptext">startet eine 2 Minutenstrafe</span>
+			</td>
+		</tr>
+
+		<tr>
+			<td>
+				<button class=" buttonPlus">Start</button>
+			</td>
+			<td>
+				<span class="helptext">startet die Spielzeituhr</span>
+			</td>
+		</tr>
+
+		<tr>
+			<td>
+				<button class=" buttonMinus" >Reset</button>
+			</td>
+			<td>
+				<span class="helptext">setzt Spielzeituhr und Toranzeige zurück auf Null</span>
+			</td>
+		</tr>
+
+		<tr>
+			<td>
+				<button class="buttonPlus">+</button>
+			</td>
+			<td>
+				<span class="helptext">Toranzeige plus 1</span>
+			</td>
+		</tr>
+
+		<tr>
+			<td>
+				<button class="buttonMinus">-</button>
+			</td>
+			<td>
+				<span class="helptext">Toranzeige minus 1</span>
+			</td>
+		</tr>
+
+	</table>
+
+	<hr>
+	<p class="row">
+		<span class="iconContainer">
+			<span class="icon-arrow-back" onClick="showApp()"></span>
+		</span>
+	</p>
+	<hr>
+</div>
+<script>
+	/*
+	var appCache = window.applicationCache;
+
+	// Fired after the first cache of the manifest.
+	appCache.addEventListener('cached', function(e){console.log('appCache cached'); console.log(e);}, false);
+
+	// Checking for an update. Always the first event fired in the sequence.
+	appCache.addEventListener('checking', function(e){console.log('appCache checking'); console.log(e); console.log(appCache.status);}, false);
+
+	// An update was found. The browser is fetching resources.
+	appCache.addEventListener('downloading', function(e){console.log('appCache checking'); console.log(e); console.log(appCache.status);}, false);
+
+	// The manifest returns 404 or 410, the download failed,
+	// or the manifest changed while the download was in progress.
+	appCache.addEventListener('error', function(e){console.log('appCache error'); console.log(e); console.log(appCache.status);}, false);
+
+	// Fired after the first download of the manifest.
+	appCache.addEventListener('noupdate', function(e){console.log('appCache noupdate'); console.log(e);}, false);
+
+	// Fired if the manifest file returns a 404 or 410.
+	// This results in the application cache being deleted.
+	appCache.addEventListener('obsolete', function(e){console.log('appCache obsolete'); console.log(e);}, false);
+
+	// Fired for each resource listed in the manifest as it is being fetched.
+	appCache.addEventListener('progress', function(e){console.log('appCache progress'); console.log(e);}, false);
+
+	// Fired when the manifest resources have been newly redownloaded.
+	appCache.addEventListener('updateready', function(e){console.log('appCache updateready'); console.log(e);}, false);
+
+
+	appCache.update(); // Attempt to update the user's cache.
+
+	alert(appCache.status);
+
+	if (appCache.status == window.applicationCache.UPDATEREADY) {
+	  appCache.swapCache();  // The fetch was successful, swap in the new cache.
+	}
+*/
+
+	init();
+
+</script>
+</body>
+</HTML>
