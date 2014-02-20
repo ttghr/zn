@@ -672,7 +672,7 @@ input.switch:checked ~ label:after
 
 
 		.header {
-			font-size: 1.8em;
+			font-size: 2em;
 			color: white;
 			text-align: center;
 		}
@@ -690,8 +690,9 @@ input.switch:checked ~ label:after
 
 		.zeit {
 			font-family: monospace;
-			font-size: 2.2em;
+			font-size: 4em;
 			font-weight: bold;
+			color: yellow;
 		}
 		label {
 			font-family: monospace; 
@@ -705,12 +706,14 @@ input.switch:checked ~ label:after
 
 <div class="centered-horizontal" id="app">
 
-	<div class="row">
-		<span class="span4 header">Heim</span>
-		<span class="span4 header zeit">
+	<div class="row center">
+		<span class="header zeit">
 			<span id="mZeit">00</span>:<span id="sZeit">00</span>
 		</span>
-		<span class="span4 header">Gast</span>
+	</div>
+	<div class="row">
+		<span class="span4 header">Heim</span>
+		<span class="offset4 span4 header">Gast</span>
 	</div>
 
 	<div class="row">
