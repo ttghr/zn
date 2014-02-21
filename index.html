@@ -126,10 +126,10 @@
 		}
 		//console.log('unload: -->');
 		//console.log(zn);
-		localforage.getItem('zn', function(v){alert(JSON.stringify(v)); zn = v;});
+		//localforage.getItem('zn', function(v){alert(JSON.stringify(v)); zn = v;});
+		//alert(JSON.stringify(zn));
 		alert(JSON.stringify(zn));
-		alert(JSON.stringify(zn));
-		localforage.setItem('zn', zn).then(console.log('zn saved in unload !'));
+		localforage.setItem('zn', zn).then(alert('zn saved in unload !'));
 	});
 	
 	window.onload = function() {
