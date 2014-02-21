@@ -107,13 +107,18 @@
 
 	};
 
-	window.unload = function(e) {
+	//window.unload = function() { is not working in ie ?!
+	
+	window.addEventListener('unload', function(){
+		alert('1');
 		zn.leaveTime = new Date();
+		alert('2');
 		
 		if (zn.ticker) {
 			clearTimeout(zn.ticker);
 			zn.ticker = null;
 		}
+		alert('3');
 		
 		if(zn.ttoTicker) {
 			clearTimeout(zn.ttoTicker);
@@ -121,9 +126,10 @@
 		}
 		console.log('unload: -->');
 		console.log(zn);
+		localforage.getItem('zn').then(alert(JSON.stringify(v)));
+		alert(JSON.stringify(zn));
 		localforage.setItem('zn', zn).then(console.log('zn saved in unload !'));
-
-	};
+	});
 	
 	window.onload = function() {
 		document.body.addEventListener('click',function(){localforage.setItem('zn', zn).then(console.log('zn saved in body.onclick !'))});
