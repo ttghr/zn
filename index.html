@@ -399,9 +399,13 @@
 			document.getElementById('app').style.display = 'none';
 			document.getElementById('help').style.display = 'table';
 		}
+		function showInfo() {
+			document.getElementById('app').style.display = 'none';
+			document.getElementById('info').style.display = 'table';
+		}
 		function showTimer() {
-			makeTimeOptions(document.getElementById('timeMin'), minute);
-			makeTimeOptions(document.getElementById('timeSek'), sekunde);
+			makeTimeOptions(document.getElementById('timeMin'), zn.minute);
+			makeTimeOptions(document.getElementById('timeSek'), zn.sekunde);
 			document.getElementById('app').style.display = 'none';
 			document.getElementById('timer').style.display = 'table';
 		}
@@ -411,6 +415,7 @@
 			document.getElementById('setup').style.display = 'none';
 			document.getElementById('timer').style.display = 'none';
 			document.getElementById('help').style.display = 'none';
+			document.getElementById('info').style.display = 'none';
 		}
 
 		function resetApp() {
@@ -587,7 +592,7 @@ input.switch:checked ~ label:after
 .helptext {
 	color: #fff;
 }
-.icon-menu, .icon-arrow-back, .icon-start, .icon-stop, .icon-help {
+.icon-menu, .icon-arrow-back, .icon-start, .icon-stop, .icon-help, .icon-info {
   border: 2px solid #FFFFFF;
   border-radius: 36px;
   display: block;
@@ -714,8 +719,19 @@ input.switch:checked ~ label:after
   font-weight: bold;
   font-size: 32px;
 }
-.icon-help:hover:before{
+.icon-help:hover:before, .icon-info:hover:before{
 	color: #666;
+}
+
+.icon-info:before {
+  content: "i";
+  display: block;
+  color: white;
+  left: 12px;
+  position: absolute;
+  top: 0px;
+  font-weight: bold;
+  font-size: 32px;
 }
 
 .fullScreen:before {
@@ -948,6 +964,9 @@ input.switch:checked ~ label:after
 			<span class="icon-help" onClick="showHelp()"></span>
 		</span>
 		<span class="iconContainer">
+			<span class="icon-info" onClick="showInfo()></span>
+		</span>
+		<span class="iconContainer">
 			<span id="fullScreen" class="fullScreen"  onClick="toggleFullscreen()"></span>
 		</span>
 		<span class="iconContainer">
@@ -1022,6 +1041,17 @@ input.switch:checked ~ label:after
 			</td>
 			<td>
 				<span class="helptext">Bedienungsanleitung</span>
+			</td>
+		</tr>
+
+		<tr>
+			<td>
+				<span class="iconContainer">
+					<span class="icon-info"></span>
+				</span>
+			</td>
+			<td>
+				<span class="helptext">Infoseite</span>
 			</td>
 		</tr>
 
@@ -1125,6 +1155,23 @@ input.switch:checked ~ label:after
 
 	</table>
 
+	<hr>
+	<p class="row">
+		<span class="iconContainer">
+			<span class="icon-arrow-back" onClick="showApp()"></span>
+		</span>
+	</p>
+	<hr>
+</div>
+
+<div class="centered-horizontal" id="info" style="display:none;">
+	<p class="row">
+		<span class="col header">Information:</span>
+	</p>
+	<hr>
+	Issues:<br>
+	Source:<br>
+	(c) MIT-Lizenz
 	<hr>
 	<p class="row">
 		<span class="iconContainer">
