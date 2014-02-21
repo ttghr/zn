@@ -124,8 +124,8 @@
 			clearTimeout(zn.ttoTicker);
 			zn.ttoTicker = null;
 		}
-		console.log('unload: -->');
-		console.log(zn);
+		//console.log('unload: -->');
+		//console.log(zn);
 		localforage.getItem('zn').then(alert(JSON.stringify(v)));
 		alert(JSON.stringify(zn));
 		localforage.setItem('zn', zn).then(console.log('zn saved in unload !'));
