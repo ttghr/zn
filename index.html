@@ -7,41 +7,169 @@
 	<meta name="mobile-web-app-capable" content="yes">
 
 	<script src="screenfull.js"></script>
+	<script src="localForage.js"></script>
+	<script src="pfiff.js"></script>
+
+<script>
+	/*
+	var appCache = window.applicationCache;
+
+	// Fired after the first cache of the manifest.
+	appCache.addEventListener('cached', function(e){console.log('appCache cached'); console.log(e);}, false);
+
+	// Checking for an update. Always the first event fired in the sequence.
+	appCache.addEventListener('checking', function(e){console.log('appCache checking'); console.log(e); console.log(appCache.status);}, false);
+
+	// An update was found. The browser is fetching resources.
+	appCache.addEventListener('downloading', function(e){console.log('appCache checking'); console.log(e); console.log(appCache.status);}, false);
+
+	// The manifest returns 404 or 410, the download failed,
+	// or the manifest changed while the download was in progress.
+	appCache.addEventListener('error', function(e){console.log('appCache error'); console.log(e); console.log(appCache.status);}, false);
+
+	// Fired after the first download of the manifest.
+	appCache.addEventListener('noupdate', function(e){console.log('appCache noupdate'); console.log(e);}, false);
+
+	// Fired if the manifest file returns a 404 or 410.
+	// This results in the application cache being deleted.
+	appCache.addEventListener('obsolete', function(e){console.log('appCache obsolete'); console.log(e);}, false);
+
+	// Fired for each resource listed in the manifest as it is being fetched.
+	appCache.addEventListener('progress', function(e){console.log('appCache progress'); console.log(e);}, false);
+
+	// Fired when the manifest resources have been newly redownloaded.
+	appCache.addEventListener('updateready', function(e){console.log('appCache updateready'); console.log(e);}, false);
+
+
+	appCache.update(); // Attempt to update the user's cache.
+
+	alert(appCache.status);
+
+	if (appCache.status == window.applicationCache.UPDATEREADY) {
+	  appCache.swapCache();  // The fetch was successful, swap in the new cache.
+	}
+*/
+
+	window.addEventListener('load', function(){
+		localforage.getItem('zn', function(savedZn){
+			if(savedZn) {
+				zn = savedZn;
+
+				if(confirm('Spielzeit und Spielstand wiederherstellen ?')) {
+					var now = new Date();
+					zn.torGast = zn.torGast -1;
+					plus('torGast');
+					zn.torHeim = zn.torHeim -1;
+					plus('torHeim');
+
+					var diffTime = (((now - zn.leaveTime)/1000) | 0); //runden
+
+					setZeit(diffTime);
+					startZeit();
+
+					alert('Die Spielzeit wurde um '+ diffTime + ' Sekunken korrigiert');
+
+				}
+				else{
+					init();
+				}
+			}
+			else {
+				init();
+			}
+		})
+	}, false);
+	
+
+	window.onbeforeunload = function(e) {
+		console.log('beforeunload: -->');
+		localforage.setItem('zn', zn).then(console.log('zn saved in onbeforeunload !'));
+
+		var confirmationMessage = 'Sicher !!!';
+		(e || window.event).returnValue = confirmationMessage;
+
+		zn.leaveTime = new Date();
+		
+		if (zn.ticker) {
+			clearTimeout(zn.ticker);
+			zn.ticker = null;
+		}
+		
+		if(zn.ttoTicker) {
+			clearTimeout(zn.ttoTicker);
+			zn.ttoTicker = null;
+		}
+		console.log('beforeunload (2): -->');
+		console.log(zn);
+		localforage.setItem('zn', zn).then(console.log('zn saved in onbeforeunload (2)!'));
+
+		return (confirmationMessage);
+
+	};
+
+	window.unload = function(e) {
+		zn.leaveTime = new Date();
+		
+		if (zn.ticker) {
+			clearTimeout(zn.ticker);
+			zn.ticker = null;
+		}
+		
+		if(zn.ttoTicker) {
+			clearTimeout(zn.ttoTicker);
+			zn.ttoTicker = null;
+		}
+		console.log('unload: -->');
+		console.log(zn);
+		localforage.setItem('zn', zn).then(console.log('zn saved in unload !'));
+
+	};
+	
+	window.onload = function() {
+		document.body.addEventListener('click',function(){localforage.setItem('zn', zn).then(console.log('zn saved in body.onclick !'))});
+	}
+
+</script>
+
 
 	<script>
-		var minute = 0;
-		var sekunde = 0;
-		var spielzeit = 60;
-		var halbzeit = 30;
-		var ticker = null;
-		var ttoTicker
-		var zweiMin = [];
-		var tto = { 
-					zeit: {
-						sekunde: 0,
-						minute:0
-					},
-					start: {
-						sekunde: 0,
-						minute: 0
-					},
-					ende: {
-						sekunde: 0,
-						minute: 0
-					},
-					id: 'tto'
-				};
+		var zn = {
+			minute: 0,
+			sekunde: 0,
+			spielzeit: 60,
+			halbzeit: 30,
+			ticker: null,
+			ttoTicker: null,
+			zweiMin: [],
+			tto: {
+				zeit: {
+					sekunde: 0,
+					minute: 0
+				},
+				start: {
+					sekunde: 0,
+					minute: 0
+				},
+				ende: {
+					sekunde: 0,
+					minute: 0
+				}
+			},
+			torHeim: 0,
+			torGast: 0
+		};
+
 
 		function startZeit() {
-			if (ticker == null) {
-				ticker = setInterval('setZeit(1)', 1000);
+			if (zn.ticker == null) {
+				zn.ticker = setInterval('setZeit(1)', 1000);
 				document.getElementById('timerButton').innerHTML = 'Stop&nbsp;';
 				document.getElementById('reset').disabled=true;
 				document.getElementById('setTimerButton').style.display='none';
 			}
 			else {
-				clearTimeout(ticker);
-				ticker = null;
+				clearTimeout(zn.ticker);
+				zn.ticker = null;
 				document.getElementById('timerButton').innerHTML = 'Start';
 				document.getElementById('reset').disabled=false;
 				document.getElementById('setTimerButton').style.display='block';
@@ -49,52 +177,60 @@
 		}
 
 		function toggleTeamTimeOut(e) {
-			if (ttoTicker == null) {
-				ttoTicker = setInterval(function(){teamTimeOut(e)}, 1000);
+			if (zn.ttoTicker == null) {
+				zn.ttoTicker = setInterval(function(){teamTimeOut(e)}, 1000);
+				document.getElementById('timerButton').disabled=true;
 			}
 			else {
-				clearTimeout(ttoTicker);
-				ttoTicker = null;
+				clearTimeout(zn.ttoTicker);
+				zn.ttoTicker = null;
+				document.getElementById('timerButton').disabled=false;
 			}
 		}
 
 		function setZeit(s) {
-			sekunde = sekunde + (s%60);
-			minute = minute + ((sekunde / 60) | 0); //runden für pos. und neg. Werte
+			var sekunden= zn.sekunde + s;
 
-			if( (minute>99) || (minute < 0) )
-				minute = 0;
-			if( (sekunde>59) || (sekunde < 0) )
-				sekunde = 0;
+			zn.sekunde = (sekunden % 60);
+			zn.minute =zn. minute + ((sekunden / 60) | 0); //runden für pos. und neg. Werte
 
-			if( ((minute == halbzeit)  &&(sekunde == 0)) ||
-			    ((minute == spielzeit) &&(sekunde == 0))   ) {
+			if( (zn.minute>99) || (zn.minute < 0) )
+				zn.minute = 0;
+			if( (zn.sekunde>59) || (zn.sekunde < 0) )
+				zn.sekunde = 0;
+
+			if( ((zn.minute == zn.halbzeit)  &&(zn.sekunde == 0)) ||
+			    ((zn.minute == zn.spielzeit) &&(zn.sekunde == 0))   ) {
+				pfiff();
 				startZeit();
 			}
 
 			var preSekunde = '';
-			if (sekunde < 10)
+			if (zn.sekunde < 10)
 				preSekunde = '0';
 
 			var preMinute = '';
-			if (minute < 10)
+			if (zn.minute < 10)
 				preMinute = '0';
 
-			document.getElementById('sZeit').innerHTML = preSekunde + sekunde;
-			document.getElementById('mZeit').innerHTML = preMinute + minute;
-			document.getElementById('sZeitKorrektur').innerHTML = preSekunde + sekunde;
-			document.getElementById('mZeitKorrektur').innerHTML = preMinute + minute;
+			document.getElementById('sZeit').innerHTML = preSekunde + zn.sekunde;
+			document.getElementById('mZeit').innerHTML = preMinute + zn.minute;
+			document.getElementById('sZeitKorrektur').innerHTML = preSekunde + zn.sekunde;
+			document.getElementById('mZeitKorrektur').innerHTML = preMinute + zn.minute;
 
-			for (i in zweiMin) {
-				if (zweiMin[i].start.sekunde>0 || zweiMin[i].start.minute>0){
-					zweiMinuten(document.getElementById(zweiMin[i].id));
+			for (i in zn.zweiMin) {
+				if (zn.zweiMin[i].start.sekunde>0 || zn.zweiMin[i].start.minute>0){
+					zweiMinuten(document.getElementById(zn.zweiMin[i].id));
 				}
 			}
+
+			localforage.setItem('zn', zn).then(console.log('zn saved in setZeit !'));
+
 		}
 
 		function setSpielzeit(e) {
-			spielzeit = e.options[e.selectedIndex].value / 1;
-			halbzeit = spielzeit / 2;
+			zn.spielzeit = e.options[e.selectedIndex].value / 1;
+			zn.halbzeit = zn.spielzeit / 2;
 		}
 
 		function makeTimeOptions(e, si) {
@@ -109,22 +245,51 @@
 
 		function plus(elemId) {
 			var elem = 	document.getElementById(elemId);
-			elem.innerHTML = elem.innerHTML/1+1;
+			zn[elemId] = zn[elemId] + 1;
+			elem.innerHTML = zn[elemId];
 		}
 		function minus(elemId) {
 			var elem = 	document.getElementById(elemId);
-			elem.innerHTML = elem.innerHTML/1-1;
+			zn[elemId] = zn[elemId] - 1;
+			elem.innerHTML = zn[elemId];
 		}
 
 		function init(){
-			sekunde = 0;
-			minute = 0;
+
+			zn = {
+						minute: 0,
+						sekunde: 0,
+						spielzeit: 60,
+						halbzeit: 30,
+						ticker: null,
+						ttoTicker: null,
+						zweiMin: [],
+						tto: {
+							zeit: {
+								sekunde: 0,
+								minute: 0
+							},
+							start: {
+								sekunde: 0,
+								minute: 0
+							},
+							ende: {
+								sekunde: 0,
+								minute: 0
+							}
+						},
+						torHeim: -1,
+						torGast: -1
+					};
+
+			plus('torHeim');
+			plus('torGast');
 
 			zm = document.getElementsByName('2Min');
 			zm_len = zm.length;
 
 			for (var i=0; i<zm.length; i++) {
-				zweiMin[zm[i].id] = { 
+				zn.zweiMin[zm[i].id] = { 
 					zeit: {
 						sekunde: 0,
 						minute:0
@@ -140,7 +305,11 @@
 					id: zm[i].id
 				};
 			}
+
+			setZeit(0);
+
 		}
+
 		function teamTimeOut(e)
 		{
 			lbl = document.getElementById('lbl_'+e.id);
@@ -148,37 +317,45 @@
 			if (e.checked == true){ // TTO ist gestartet
 				if (lbl.innerHTML == 'TTO') { //erster tick -> auf Null setzen
 					//Zeit anhalten
-					if (ticker !== null) {
-						clearTimeout(ticker);
-						ticker = null;
+					if (zn.ticker !== null) {
+						clearTimeout(zn.ticker);
+						zn.ticker = null;
 						document.getElementById('timerButton').innerHTML = 'Start';
 					}
-					tto.zeit.sekunde = 0;
-					tto.zeit.minute = 0;
-					tto.start.minute = minute;
-					tto.start.sekunde = sekunde;
-					tto.ende.minute = minute + 1;
-					tto.ende.sekunde = tto.start.sekunde;
+					zn.tto.zeit.sekunde = 0;
+					zn.tto.zeit.minute = 0;
+					zn.tto.start.minute = zn.minute;
+					zn.tto.start.sekunde = zn.sekunde;
+					zn.tto.ende.minute = zn.minute + 1;
+					zn.tto.ende.sekunde = zn.tto.start.sekunde;
 					lbl.innerHTML = '0:00';
 				}
 				else { //laufender tick -> plus eine Sekunde
-					tto.zeit.sekunde = tto.zeit.sekunde + 1;
-					if (tto.zeit.sekunde >= 60) {
-						tto.zeit.sekunde = 0;
-						tto.zeit.minute = tto.zeit.minute + 1;
+					zn.tto.zeit.sekunde = zn.tto.zeit.sekunde + 1;
+					if (zn.tto.zeit.sekunde >= 60) {
+						zn.tto.zeit.sekunde = 0;
+						zn.tto.zeit.minute = zn.tto.zeit.minute + 1;
+					}
+					//50Sekunden abgelaufen -> pfiff
+					if (zn.tto.zeit.sekunde == 50) {
+						pfiff();
 					}
 					// 1Minuten abgelaufen -> reset
-					if (tto.zeit.minute == 1) {
+					if (zn.tto.zeit.minute == 1) {
+						toggleTeamTimeOut();
 						lbl.innerHTML = 'TTO';
-						tto.start.minute = 0;
-						tto.start.sekunde = 0;
+						zn.tto.start.minute = 0;
+						zn.tto.start.sekunde = 0;
+						zn.tto.zeit.sekunde = 0;
+						zn.tto.zeit.minute = 0;
 						e.checked = false;
+						pfiff();
 					}
 					else {//laufende Ausgabe
 						var preSekunde = '';
-						if (tto.zeit.sekunde < 10)
+						if (zn.tto.zeit.sekunde < 10)
 							preSekunde = '0';
-						lbl.innerHTML = tto.zeit.minute + ':' + preSekunde + tto.zeit.sekunde;
+						lbl.innerHTML = zn.tto.zeit.minute + ':' + preSekunde + zn.tto.zeit.sekunde;
 					}
 				}
 			}
@@ -192,32 +369,32 @@
 
 			if (e.checked == true){ // 2Min sind gestartet
 				if (lbl.innerHTML == '2 Min') {//erster tick -> auf Null setzen
-					zweiMin[e.id].zeit.sekunde = 0;
-					zweiMin[e.id].zeit.minute = 0;
-					zweiMin[e.id].start.minute = minute;
-					zweiMin[e.id].start.sekunde = sekunde;
-					zweiMin[e.id].ende.minute = minute + 2;
-					zweiMin[e.id].ende.sekunde = zweiMin[e.id].start.sekunde;
+					zn.zweiMin[e.id].zeit.sekunde = 0;
+					zn.zweiMin[e.id].zeit.minute = 0;
+					zn.zweiMin[e.id].start.minute = zn.minute;
+					zn.zweiMin[e.id].start.sekunde = zn.sekunde;
+					zn.zweiMin[e.id].ende.minute = zn.minute + 2;
+					zn.zweiMin[e.id].ende.sekunde = zn.zweiMin[e.id].start.sekunde;
 					lbl.innerHTML = '0:00';
 				}
 				else { //laufender tick -> plus eine Sekunde
-					zweiMin[e.id].zeit.sekunde = zweiMin[e.id].zeit.sekunde + 1;
-					if (zweiMin[e.id].zeit.sekunde >= 60) {
-						zweiMin[e.id].zeit.sekunde = 0;
-						zweiMin[e.id].zeit.minute = zweiMin[e.id].zeit.minute + 1;
+					zn.zweiMin[e.id].zeit.sekunde = zn.zweiMin[e.id].zeit.sekunde + 1;
+					if (zn.zweiMin[e.id].zeit.sekunde >= 60) {
+						zn.zweiMin[e.id].zeit.sekunde = 0;
+						zn.zweiMin[e.id].zeit.minute = zn.zweiMin[e.id].zeit.minute + 1;
 					}
 					// 2Minuten abgelaufen -> reset
-					if (zweiMin[e.id].zeit.minute == 2) {
+					if (zn.zweiMin[e.id].zeit.minute == 2) {
 						lbl.innerHTML = '2 Min';
-						zweiMin[e.id].start.minute = 0;
-						zweiMin[e.id].start.sekunde = 0;
+						zn.zweiMin[e.id].start.minute = 0;
+						zn.zweiMin[e.id].start.sekunde = 0;
 						e.checked = false;
 					}
 					else {//laufende Ausgabe
 						var preSekunde = '';
-						if (zweiMin[e.id].zeit.sekunde < 10)
+						if (zn.zweiMin[e.id].zeit.sekunde < 10)
 							preSekunde = '0';
-						lbl.innerHTML = zweiMin[e.id].zeit.minute + ':' + preSekunde + zweiMin[e.id].zeit.sekunde;
+						lbl.innerHTML = zn.zweiMin[e.id].zeit.minute + ':' + preSekunde + zn.zweiMin[e.id].zeit.sekunde;
 					}
 				}
 			}
@@ -256,7 +433,7 @@
 		}
 
 		function resetApp() {
-			if (!ticker && confirm('reset the current game !') ) {
+			if (!zn.ticker && confirm('reset the current game !') ) {
 				document.getElementById('torHeim').innerHTML = 0;
 				document.getElementById('torGast').innerHTML = 0;
 				//startZeit();
@@ -299,7 +476,8 @@ html
 	padding-right: 10px;*/
 	height: 100%;
 	min-width: 100%%;
-	/*max-width: 280px;*/
+	max-width: 98%;
+	width:98%;
 	/*padding: 10px;*/
 }
 
@@ -639,7 +817,7 @@ input.switch:checked ~ label:after
 			position:relative;
 			top:1px;
 		}
-		.buttonMinus:disabled {
+		.buttonMinus:disabled, .buttonPlus:disabled {
 			background-color: #0000FF;
 			border-color: #0000FF;
 			color: #AFAFAF;
@@ -746,11 +924,11 @@ input.switch:checked ~ label:after
 
 	<div class="row">
 		<span class="span6">
-			<input type="checkbox" id="2MinHeim1" class="switch" name="2Min" onClick="zweiMinuten(this)"></input>
+			<input type="checkbox" id="2MinHeim1" class="switch" name="2Min" onClick="zweiMinuten(this)" />
 			<label class="col_" id="lbl_2MinHeim1" for="2MinHeim1">2 Min</label>
 		</span>
 		<span class="span6">
-			<input type="checkbox" id="2MinGast1" class="switch" name="2Min" onClick="zweiMinuten(this)"></input>
+			<input type="checkbox" id="2MinGast1" class="switch" name="2Min" onClick="zweiMinuten(this)" />
 			<label class="col_" id="lbl_2MinGast1" for="2MinGast1">2 Min</label>
 		</span>
 	</div>
@@ -901,7 +1079,17 @@ input.switch:checked ~ label:after
 
 		<tr>
 			<td>
-				<input type="checkbox" id="2MinHelp" class="switch" name="2Min"></input>
+				<input type="checkbox" id="ttoHelp" class="switch" />
+				<label class="col" id="lbl_tto" for="ttoHelp">TTO</label>
+			</td>
+			<td>
+				<span class="helptext">startet die Stopuhr für ein Team Timeout</span>
+			</td>
+		</tr>
+
+		<tr>
+			<td>
+				<input type="checkbox" id="2MinHelp" class="switch" name="2Min" />
 				<label class="col_" for="2MinHelp">2 Min</label>
 			</td>
 			<td>
@@ -915,6 +1103,15 @@ input.switch:checked ~ label:after
 			</td>
 			<td>
 				<span class="helptext">startet die Spielzeituhr</span>
+			</td>
+		</tr>
+
+		<tr>
+			<td>
+				<button class=" buttonPlus">Stop&nbsp;</button>
+			</td>
+			<td>
+				<span class="helptext">hält die Spielzeituhr an</span>
 			</td>
 		</tr>
 
@@ -955,48 +1152,8 @@ input.switch:checked ~ label:after
 	</p>
 	<hr>
 </div>
-<script>
-	/*
-	var appCache = window.applicationCache;
-
-	// Fired after the first cache of the manifest.
-	appCache.addEventListener('cached', function(e){console.log('appCache cached'); console.log(e);}, false);
-
-	// Checking for an update. Always the first event fired in the sequence.
-	appCache.addEventListener('checking', function(e){console.log('appCache checking'); console.log(e); console.log(appCache.status);}, false);
-
-	// An update was found. The browser is fetching resources.
-	appCache.addEventListener('downloading', function(e){console.log('appCache checking'); console.log(e); console.log(appCache.status);}, false);
-
-	// The manifest returns 404 or 410, the download failed,
-	// or the manifest changed while the download was in progress.
-	appCache.addEventListener('error', function(e){console.log('appCache error'); console.log(e); console.log(appCache.status);}, false);
-
-	// Fired after the first download of the manifest.
-	appCache.addEventListener('noupdate', function(e){console.log('appCache noupdate'); console.log(e);}, false);
-
-	// Fired if the manifest file returns a 404 or 410.
-	// This results in the application cache being deleted.
-	appCache.addEventListener('obsolete', function(e){console.log('appCache obsolete'); console.log(e);}, false);
-
-	// Fired for each resource listed in the manifest as it is being fetched.
-	appCache.addEventListener('progress', function(e){console.log('appCache progress'); console.log(e);}, false);
-
-	// Fired when the manifest resources have been newly redownloaded.
-	appCache.addEventListener('updateready', function(e){console.log('appCache updateready'); console.log(e);}, false);
-
-
-	appCache.update(); // Attempt to update the user's cache.
-
-	alert(appCache.status);
-
-	if (appCache.status == window.applicationCache.UPDATEREADY) {
-	  appCache.swapCache();  // The fetch was successful, swap in the new cache.
-	}
-*/
-
-	init();
-
-</script>
 </body>
+
+
+
 </HTML>
