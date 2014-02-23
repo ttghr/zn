@@ -388,9 +388,9 @@
 		
 		function toggleFullscreen() {
 			if (screenfull.enabled) {
-				pfiff.play();
 				screenfull.toggle();
 			}
+			pfiff.play();
 		}
 		function showSetup() {
 			document.getElementById('app').style.display = 'none';
@@ -1190,7 +1190,7 @@ input.switch:checked ~ label:after
 	pfiff = document.getElementById('pfiff');
 	pfiff.play();
 </script>
-
+1
 </body>
 
 
