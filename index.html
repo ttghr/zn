@@ -48,7 +48,7 @@
 	  appCache.swapCache();  // The fetch was successful, swap in the new cache.
 	}
 */
-	var pfiff = document.getElementById('pfiff'); //container für audio element
+	var pfiff; //container für audio element
 	var pfiffInit = false; //state für init see onload
 
 	window.addEventListener('load', function(){
@@ -110,6 +110,7 @@
 	window.onload = function() {
 		document.body.addEventListener('click',function(){
 			if (!pfiffInit) {
+				pfiff = document.getElementById('pfiff'); //container für audio element
 				pfiff.play();
 				pfiff.pause();
 				pfiffInit =true; //important on ios devices. javascript play works after user action(button) play ?!
@@ -1183,6 +1184,7 @@ input.switch:checked ~ label:after
 	<hr>
 	Issues:<br>
 	Source:<br>
+	Kontakt:<br>
 	(c) MIT-Lizenz
 	<hr>
 	<p class="row">
