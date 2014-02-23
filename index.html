@@ -48,7 +48,8 @@
 	  appCache.swapCache();  // The fetch was successful, swap in the new cache.
 	}
 */
-	var pfiff; //container für audio element
+	var pfiff = document.getElementById('pfiff'); //container für audio element
+	var pfiffInit = false; //state für init see onload
 
 	window.addEventListener('load', function(){
 		localforage.getItem('zn', function(savedZn){
@@ -107,7 +108,15 @@
 	};
 
 	window.onload = function() {
-		document.body.addEventListener('click',function(){localforage.setItem('zn', zn).then(console.log('zn saved in body.onclick !'))});
+		document.body.addEventListener('click',function(){
+			if (!pfiffInit) {
+				pfiff.play();
+				pfiff.pause();
+				pfiffInit =true; //important on ios devices. javascript play works after user action(button) play ?!
+			}
+
+			localforage.setItem('zn', zn).then(console.log('zn saved in body.onclick !'));
+		});
 	}
 
 </script>
@@ -390,7 +399,6 @@
 			if (screenfull.enabled) {
 				screenfull.toggle();
 			}
-			pfiff.play();pfiff.pause();
 		}
 		function showSetup() {
 			document.getElementById('app').style.display = 'none';
@@ -1185,11 +1193,6 @@ input.switch:checked ~ label:after
 	<hr>
 </div>
 
-<script>
-	pfiff = document.getElementById('pfiff');
-	pfiff.src ='alarm15.mp3';
-</script>
-<span>51</spann>
 </body>
 
 
