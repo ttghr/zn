@@ -10,7 +10,7 @@
 
 </head>
 <body>
-	<audio id="t3" autobuffer>
+	<audio id="t3" autobuffer autoplay controls>
 		<source src="alarm15.mp3" />
 	</audio>
 
@@ -29,7 +29,7 @@
 	//t.src = "data:audio/mp3;base64,"+pfiffB64;
 	t.src = "alarm15.mp3";
 
-	setTimeout("document.getElementById('t3').play();", 2000);
+	setTimeout("alert(1);document.getElementById('t3').play();", 3000);
 
 
 </script>
