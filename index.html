@@ -388,6 +388,7 @@
 		
 		function toggleFullscreen() {
 			if (screenfull.enabled) {
+				pfiff.play();
 				screenfull.toggle();
 			}
 		}
@@ -1013,10 +1014,10 @@ input.switch:checked ~ label:after
 	<p class="row">
 	
 		<span class="span12 header zeit">
-		<select id="timeMin" onChange="minute = this.options[this.selectedIndex].value/1; setZeit(0);">
+		<select id="timeMin" onChange="zn.minute = this.options[this.selectedIndex].value/1; setZeit(0);">
 		</select>
 		:
-		<select id="timeSek" onChange="sekunde = this.options[this.selectedIndex].value/1; setZeit(0);">
+		<select id="timeSek" onChange="zn.sekunde = this.options[this.selectedIndex].value/1; setZeit(0);">
 		</select>
 		</span>
 
@@ -1185,7 +1186,7 @@ input.switch:checked ~ label:after
 	<hr>
 </div>
 
-<<script>
+<script>
 	pfiff = document.getElementById('pfiff');
 	pfiff.play();
 </script>
