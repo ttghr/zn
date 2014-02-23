@@ -8,7 +8,6 @@
 
 	<script src="screenfull.js"></script>
 	<script src="localForage.js"></script>
-	<script src="pfiff.js"></script>
 
 <script>
 	/*
@@ -49,6 +48,7 @@
 	  appCache.swapCache();  // The fetch was successful, swap in the new cache.
 	}
 */
+	var pfiff; //container für audio element
 
 	window.addEventListener('load', function(){
 		localforage.getItem('zn', function(savedZn){
@@ -108,6 +108,7 @@
 
 	window.onload = function() {
 		document.body.addEventListener('click',function(){localforage.setItem('zn', zn).then(console.log('zn saved in body.onclick !'))});
+		pfiff = document.getElementById('pfiff');
 	}
 
 </script>
@@ -182,7 +183,7 @@
 
 			if( ((zn.minute == zn.halbzeit)  &&(zn.sekunde == 0)) ||
 			    ((zn.minute == zn.spielzeit) &&(zn.sekunde == 0))   ) {
-				pfiff();
+				pfiff.play();
 				startZeit();
 			}
 
@@ -319,7 +320,7 @@
 					}
 					//50Sekunden abgelaufen -> pfiff
 					if (zn.tto.zeit.sekunde == 50) {
-						pfiff();
+						pfiff.play();
 					}
 					// 1Minuten abgelaufen -> reset
 					if (zn.tto.zeit.minute == 1) {
@@ -330,7 +331,7 @@
 						zn.tto.zeit.sekunde = 0;
 						zn.tto.zeit.minute = 0;
 						e.checked = false;
-						pfiff();
+						pfiff.play();
 					}
 					else {//laufende Ausgabe
 						var preSekunde = '';
@@ -880,6 +881,10 @@ input.switch:checked ~ label:after
 	</style>
 </head>
 <body>
+<audio id="pfiff" autobuffer>
+	<source src="alarm15.mp3" />
+</audio>
+
 
 <div class="centered-horizontal" id="app">
 
