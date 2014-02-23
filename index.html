@@ -109,7 +109,7 @@
 	window.onload = function() {
 		document.body.addEventListener('click',function(){localforage.setItem('zn', zn).then(console.log('zn saved in body.onclick !'))});
 		pfiff = document.getElementById('pfiff');
-		pfiff.play();
+		document.getElementById('pfiff').play();
 	}
 
 </script>
@@ -184,7 +184,7 @@
 
 			if( ((zn.minute == zn.halbzeit)  &&(zn.sekunde == 0)) ||
 			    ((zn.minute == zn.spielzeit) &&(zn.sekunde == 0))   ) {
-				pfiff.play();
+				document.getElementById('pfiff').play();
 				startZeit();
 			}
 
@@ -321,7 +321,10 @@
 					}
 					//50Sekunden abgelaufen -> pfiff
 					if (zn.tto.zeit.sekunde == 50) {
-						pfiff.play();
+						document.getElementById('pfiff').play();
+					}
+					if (zn.tto.zeit.sekunde == 2) {
+						document.getElementById('pfiff').play();
 					}
 					// 1Minuten abgelaufen -> reset
 					if (zn.tto.zeit.minute == 1) {
@@ -332,7 +335,7 @@
 						zn.tto.zeit.sekunde = 0;
 						zn.tto.zeit.minute = 0;
 						e.checked = false;
-						pfiff.play();
+						document.getElementById('pfiff').play();
 					}
 					else {//laufende Ausgabe
 						var preSekunde = '';
