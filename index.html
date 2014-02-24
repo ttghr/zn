@@ -52,7 +52,8 @@
 	var pfiff; //container für audio element
 	var pfiffInit = false; //state für init see onload
 
-	window.addEventListener('load', function(){
+	//window.addEventListener('load', function(){
+	function startApp() {
 		localforage.getItem('zn', function(savedZn){
 			if(savedZn) {
 				zn = savedZn;
@@ -80,7 +81,8 @@
 				init();
 			}
 		})
-	}, false);
+//	}, false);
+	};
 	
 
 	window.onbeforeunload = function(e) {
@@ -109,6 +111,7 @@
 	};
 
 	window.onload = function() {
+		showScreenSaverInfo();
 		FastClick.attach(document.body);
 		document.body.addEventListener('click',function(){
 			if (!pfiffInit) {
@@ -415,6 +418,10 @@
 			document.getElementById('app').style.display = 'none';
 			document.getElementById('info').style.display = 'table';
 		}
+		function showScreenSaverInfo() {
+			document.getElementById('app').style.display = 'none';
+			document.getElementById('screenSaverInfo').style.display = 'table';
+		}
 		function showTimer() {
 			makeTimeOptions(document.getElementById('timeMin'), zn.minute);
 			makeTimeOptions(document.getElementById('timeSek'), zn.sekunde);
@@ -428,6 +435,7 @@
 			document.getElementById('timer').style.display = 'none';
 			document.getElementById('help').style.display = 'none';
 			document.getElementById('info').style.display = 'none';
+			document.getElementById('screenSaverInfo').style.display = 'none';
 		}
 
 		function resetApp() {
@@ -1181,7 +1189,7 @@ input.switch:checked ~ label:after
 
 <div class="centered-horizontal" id="info" style="display:none;">
 	<p class="row">
-		<span class="col header">Information:</span>
+		<span class="col header">Über:</span>
 	</p>
 	<hr>
 	Issues:<br>
@@ -1196,6 +1204,30 @@ input.switch:checked ~ label:after
 	</p>
 	<hr>
 </div>
+
+<div class="centered-horizontal" id="screenSaverInfo" style="display:none;">
+	<p class="row">
+		<span class="col header">Hinweis:</span>
+	</p>
+	<hr>
+	
+	Für den korrekten Betrieb der Anwendung ist ist notwendig den automatischen Bildschirmschoner ihres Gerätes abzuschalten.
+
+	iOS: Einstellungen->Bildschirm->...
+	WP: Einstellungen-Screen->Dauer: nie
+
+	Windows: Systemsteuerung->Energieoptionen->Zeitpunkt für das Ausschalten des Bildschirms wählen
+
+
+	<hr>
+	<p class="row">
+		<span class="iconContainer">
+			<span class="icon-arrow-back" onClick="showApp(); startApp();"></span>
+		</span>
+	</p>
+	<hr>
+</div>
+
 
 </body>
 
